@@ -47,11 +47,11 @@ def env(tmp_path, monkeypatch):
     """)
     conn.execute(
         "INSERT INTO signals (id, product, kind, body, privacy_class, ingested_at)"
-        " VALUES ('sig_customer','vivy','note','a customer wrote this','customer',"
+        " VALUES ('sig_customer','fennick','note','a customer wrote this','customer',"
         "'2026-08-01 07:31:00.000000')")
     conn.execute(
         "INSERT INTO signals (id, product, kind, body, privacy_class, ingested_at)"
-        " VALUES ('sig_internal','vivy','note','an internal note','internal',"
+        " VALUES ('sig_internal','fennick','note','an internal note','internal',"
         "'2026-08-01 07:30:00.000000')")
     conn.commit()
     conn.close()
@@ -351,6 +351,29 @@ def test_roster_write_in_withholds_is_unaffected_on_a_non_orchestrator_entry(
     write({GRANTED: {"name": "sys", "products": ["*"], "kind": "system",
                      "withholds": ["roster.write"]}})
     assert client.get("/whoami", headers=_h(GRANTED)).status_code == 200
+
+
+@pytest.mark.parametrize("kind", [None, "system", "agent"])
+def test_a_non_orchestrator_entry_naming_registry_write_in_grants_is_refused(
+        env, kind):
+    """`registry.write` is orchestrator-only at the entry level too
+    (`identity._entry_capabilities`), for the same reason `roster.write` is
+    (CQ·242)."""
+    client, write, *_ = env
+    entry = {"name": "sneaky", "products": ["*"], "grants": ["registry.write"]}
+    if kind:
+        entry["kind"] = kind
+    write({GRANTED: entry})
+    assert client.get("/whoami", headers=_h(GRANTED)).status_code == 401
+    assert client.get("/whoami", headers=_h(AGENT)).status_code == 200
+
+
+def test_an_orchestrator_entry_naming_registry_write_in_grants_loads(env):
+    client, write, *_ = env
+    write({GRANTED: {"name": "orc", "products": ["*"], "kind": "orchestrator",
+                     "grants": ["registry.write"]}})
+    r = client.get("/whoami", headers=_h(GRANTED))
+    assert r.status_code == 200, r.text
 
 
 def test_a_bad_entry_in_orients_file_never_halts_the_service(env):

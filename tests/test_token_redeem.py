@@ -45,9 +45,9 @@ import store
 import tls_ca
 from mtls_server import RunningServer, tls_config
 
-AGENT = "agent-token-vivy"
-OTHER_SCOPE = "agent-token-constance-only"
-NOREF = "agent-token-vivy-noref"
+AGENT = "agent-token-fennick"
+OTHER_SCOPE = "agent-token-marlow-only"
+NOREF = "agent-token-fennick-noref"
 MACHINE = "macbook"
 OTHER_MACHINE = "keelboat"
 
@@ -147,16 +147,16 @@ def base_client(tmp_path, monkeypatch):
     conn.execute(
         "INSERT INTO issue_items (id, product, title, type, state, needs, "
         "created_by_kind, parent_id, created_at, refs) VALUES "
-        "('task_a', 'vivy', 'Task A', 'task', 'claimed', 'agent', 'agent', "
+        "('task_a', 'fennick', 'Task A', 'task', 'claimed', 'agent', 'agent', "
         "NULL, ?, '{}')", (_ts(days=1),))
     conn.commit()
     conn.close()
 
     tokens = tmp_path / "api-tokens.json"
     tokens.write_text(json.dumps({
-        AGENT: {"name": "vivy-agent", "products": ["vivy"]},
-        OTHER_SCOPE: {"name": "constance-agent", "products": ["constance"]},
-        NOREF: {"name": "vivy-noref-agent", "products": ["vivy"],
+        AGENT: {"name": "fennick-agent", "products": ["fennick"]},
+        OTHER_SCOPE: {"name": "marlow-agent", "products": ["marlow"]},
+        NOREF: {"name": "fennick-noref-agent", "products": ["fennick"],
                 "withholds": ["reference.read"]},
     }))
     monkeypatch.setattr(store, "DB_PATH", db)
@@ -195,7 +195,7 @@ def _db():
     return conn
 
 
-def _mint_slip(*, now=None, item_id="task_a", product="vivy", grant=None):
+def _mint_slip(*, now=None, item_id="task_a", product="fennick", grant=None):
     conn = _db()
     slip_id = call_slips.mint(conn, item_id=item_id, product=product,
                               claim_owner_label="checkout-owner", now=now,
@@ -226,8 +226,8 @@ def test_redeeming_a_slip_issues_a_card_and_consumes_it(client):
     assert r.status_code == 200
     body = r.json()
     assert body["card_id"].startswith("card_")
-    assert body["actor"] == "vivy-agent"
-    assert body["product"] == "vivy"
+    assert body["actor"] == "fennick-agent"
+    assert body["product"] == "fennick"
     assert body["protocol_version"] == protocol.CURRENT
     assert body["state"] == "active"
     assert _slip_row(slip_id)["redeemed_at"] is not None
@@ -241,7 +241,7 @@ def test_redeeming_a_slip_issues_a_card_and_consumes_it(client):
 GRANT = {
     "persona_md": "# coder\n\nWrites the change.",
     "docs": [{"id": "platform/agents/coder", "body_sha256": "ab" * 32}],
-    "bundle": {"profile": "vivy/daytime", "available": True},
+    "bundle": {"profile": "fennick/daytime", "available": True},
     "model": "model-resolution-not-implemented",
     "budget": {"cap_usd": 2.5},
     "limits": {},
@@ -379,7 +379,7 @@ def test_a_credential_bound_to_another_machine_is_refused(base_client):
     assert r.status_code == 401
     text = r.text
     assert MACHINE not in text and OTHER_MACHINE not in text
-    assert "vivy-agent" not in text
+    assert "fennick-agent" not in text
     _assert_refused_and_nothing_written(slip_id)
 
 
@@ -535,7 +535,7 @@ def test_over_a_real_handshake_the_bound_machine_redeems_and_another_is_refused(
         status, body = _post_redeem(
             port, _client_ctx(base_client, good, good_key), slip_id)
         assert status == 200, body
-        assert json.loads(body)["actor"] == "vivy-agent"
+        assert json.loads(body)["actor"] == "fennick-agent"
     finally:
         server.stop()
     assert len(_cards()) == 1

@@ -33,7 +33,7 @@ import store
 import tls_ca
 from test_token_redeem import MACHINE, _OverMTLS, _bind, _der, _register, _uri
 
-AGENT = "agent-token-vivy"
+AGENT = "agent-token-fennick"
 # Past the slip's TTL by a margin, and nowhere near the lease's grace.
 LATER = dt.timedelta(seconds=call_slips.TTL_SECONDS + 60)
 
@@ -109,16 +109,16 @@ def client(tmp_path, monkeypatch, vector_index, ledger_tables):
     conn.executemany(
         "INSERT INTO issue_items (id, product, title, type, state, needs, "
         "created_by_kind, parent_id, created_at, refs) VALUES (?,?,?,?,?,?,?,?,?,?)",
-        [("task_a", "vivy", "Task A", None, "open", "agent", "agent", None,
+        [("task_a", "fennick", "Task A", None, "open", "agent", "agent", None,
           _ts(days=1), "{}"),
-         ("task_b", "vivy", "Task B", None, "open", "agent", "agent", None,
+         ("task_b", "fennick", "Task B", None, "open", "agent", "agent", None,
           _ts(days=1), "{}")])
     conn.commit()
     conn.close()
 
     tokens = tmp_path / "api-tokens.json"
     tokens.write_text(json.dumps({
-        AGENT: {"name": "vivy-agent", "products": ["vivy"]}}))
+        AGENT: {"name": "fennick-agent", "products": ["fennick"]}}))
     vector_index(db)
     ledger_tables(db)
     monkeypatch.setattr(store, "DB_PATH", db)

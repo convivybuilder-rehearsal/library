@@ -46,11 +46,11 @@ import vectors
 
 REPO = Path(__file__).resolve().parent.parent
 
-AGENT = "agent-token-vivy"
+AGENT = "agent-token-fennick"
 
 REGISTRY = {
     "_meta": {},
-    "vivy": {"repos": []},
+    "fennick": {"repos": []},
 }
 
 
@@ -64,7 +64,7 @@ def _ts(**delta):
             - _dt.timedelta(**delta)).isoformat(" ")
 
 
-def _insert_signal(db_path, sig_id, kind, *, product="vivy", body="body",
+def _insert_signal(db_path, sig_id, kind, *, product="fennick", body="body",
                     refs=None, meta=None, ingested_at=None, embedded_at="x",
                     dedup_key=None, privacy_class="internal", stream=None):
     conn = sqlite3.connect(db_path)
@@ -97,7 +97,7 @@ def env(tmp_path, monkeypatch, vector_index):
 
     tokens = tmp_path / "api-tokens.json"
     tokens.write_text(json.dumps({
-        AGENT: {"name": "vivy-agent", "products": ["vivy"]},
+        AGENT: {"name": "fennick-agent", "products": ["fennick"]},
     }))
 
     vector_index(db)
@@ -396,7 +396,7 @@ def test_ack_a_cold_signal_succeeds(env, monkeypatch, tmp_path):
     # `identity.TOKENS` (`test_signal_acks.py`'s own fixture).
     client_tokens = tmp_path / "client-tokens.json"
     client_tokens.write_text(json.dumps({
-        "client-token": {"name": "orient", "products": ["vivy"]}}))
+        "client-token": {"name": "orient", "products": ["fennick"]}}))
     monkeypatch.setattr(identity, "CLIENT_TOKENS", client_tokens)
 
     client = TestClient(libapp.app)
@@ -419,7 +419,7 @@ def test_a_dedup_repost_of_a_moved_signal_returns_the_cold_row_unchanged(env):
     client = TestClient(libapp.app)
     r = client.post("/signals", json={
         "source": "test", "kind": "note", "actor": "someone",
-        "product": "vivy", "body": "a different body", "dedup_key": "dk1"},
+        "product": "fennick", "body": "a different body", "dedup_key": "dk1"},
         headers=_h())
 
     assert r.status_code == 200
@@ -446,7 +446,7 @@ def test_a_dedup_repost_of_a_moved_signal_answers_503_when_the_cold_file_is_gone
     client = TestClient(libapp.app)
     r = client.post("/signals", json={
         "source": "test", "kind": "note", "actor": "someone",
-        "product": "vivy", "body": "a different body", "dedup_key": "dk1"},
+        "product": "fennick", "body": "a different body", "dedup_key": "dk1"},
         headers=_h())
 
     assert r.status_code == 503
@@ -470,7 +470,7 @@ def test_a_dedup_repost_of_a_moved_signal_answers_503_when_LIBRARY_COLD_DB_is_un
     client = TestClient(libapp.app)
     r = client.post("/signals", json={
         "source": "test", "kind": "note", "actor": "someone",
-        "product": "vivy", "body": "a different body", "dedup_key": "dk1"},
+        "product": "fennick", "body": "a different body", "dedup_key": "dk1"},
         headers=_h())
 
     assert r.status_code == 503
@@ -686,7 +686,7 @@ def test_interrupted_restore_before_step_1_commits_leaves_it_cold_only(
     client = TestClient(libapp.app)
     r = client.post("/signals", json={
         "source": "test", "kind": "note", "actor": "someone",
-        "product": "vivy", "body": "x", "dedup_key": "dk1"}, headers=_h())
+        "product": "fennick", "body": "x", "dedup_key": "dk1"}, headers=_h())
     assert r.status_code == 200
     assert r.json()["id"] == "sig_a"
 
